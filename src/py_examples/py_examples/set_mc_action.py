@@ -26,6 +26,7 @@ class SetMcActionClient(Node):
     def send_request(self, action_name: str):
         req = SetMcAction.Request()
         req.header = RequestHeader()
+        req.source = 'node'
 
         cmd = McActionCommand()
         cmd.action_desc = action_name

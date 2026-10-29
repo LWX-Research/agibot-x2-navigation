@@ -4,6 +4,7 @@ import numpy as np
 import open3d as o3d
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import Header
 from sensor_msgs.msg import PointCloud2
@@ -85,12 +86,14 @@ def main(args=None):
     try:
         node = PCDToCloudPublisher()
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     except Exception as e:
         print(f'[ERROR] {e}')
     finally:
         if node is not None:
             node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == '__main__':

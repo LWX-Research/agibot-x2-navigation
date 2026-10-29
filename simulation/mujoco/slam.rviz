@@ -1,0 +1,76 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Background Color: 35; 35; 40
+    Fixed Frame: sim_map
+    Frame Rate: 20
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 30
+      Reference Frame: <Fixed Frame>
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Simulated SLAM map
+      Enabled: true
+      Topic:
+        Value: /mujoco_slam/cloud_registered
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        Depth: 10
+      Color Transformer: AxisColor
+      Axis: Z
+      Decay Time: 120
+      Size (Pixels): 2
+      Style: Points
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Original reference map
+      Enabled: false
+      Topic:
+        Value: /sim/reference_map
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+      Color Transformer: FlatColor
+      Color: 100; 100; 110
+      Size (Pixels): 1
+      Style: Points
+    - Class: rviz_default_plugins/Path
+      Name: FAST-LIO path
+      Enabled: true
+      Topic:
+        Value: /mujoco_slam/path
+        Reliability Policy: Reliable
+        Depth: 10
+      Color: 60; 255; 80
+      Line Style: Lines
+      Line Width: 0.03
+    - Class: rviz_default_plugins/Path
+      Name: Ground truth path
+      Enabled: true
+      Topic:
+        Value: /sim/ground_truth_path
+        Reliability Policy: Reliable
+        Depth: 10
+      Color: 255; 140; 30
+      Line Style: Lines
+      Line Width: 0.03
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 18
+      Pitch: 0.8
+      Yaw: 0.8
+      Focal Point:
+        X: -0.5
+        Y: 0
+        Z: 0
+Window Geometry:
+  Width: 1100
+  Height: 760

@@ -1,0 +1,6 @@
+numpy<2
+open3d>=0.18
+mujoco==3.17.0
+scipy
+PyYAML
+matplotlib

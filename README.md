@@ -21,6 +21,15 @@
 > 看护并随时可以急停。建议先只启动感知、建图和定位，确认 TF、地图与位姿
 > 正常后再启动速度桥接；首次导航目标建议放在机器人前方 0.5 m 以内。
 
+## 当前状态与入口
+
+- [MuJoCo 建图：载体与 X2 全身仿真](simulation/mujoco/README.md)
+- [更新记录](CHANGELOG.md) · [版本规划与仓库分工](releases/README.md)
+- [2026-10-29 仿真验证记录](docs/validation/2026-10-29.md)
+
+当前已验证 X2 全身仿真与 FAST-LIO 建图。下文包含定位、Nav2 等已有配置，
+不代表本次完成了真机自主导航或扫描场景中的避障验收。
+
 ## 1. 系统流程
 
 ```mermaid
@@ -84,7 +93,7 @@ ROS 2 Humble 官方支持 Ubuntu 22.04 的 amd64 与 arm64 平台。安装 ROS 2
 路径一致：
 
 ```bash
-git clone https://github.com/Nova-Valley/agibot-x2-navigation.git ~/agibot_ws
+git clone https://github.com/LWX-Research/agibot-x2-navigation.git ~/agibot_ws
 cd ~/agibot_ws
 ```
 
@@ -123,7 +132,7 @@ sudo apt install -y \
 PCD 合并和发布节点使用 Open3D：
 
 ```bash
-python3 -m pip install --user numpy open3d
+python3 -m pip install --user 'numpy<2' open3d
 ```
 
 然后让 `rosdep` 补齐各 ROS 包声明的依赖：
@@ -321,11 +330,26 @@ src/spark-fast-lio/spark_fast_lio/config/robosense-e1r.yaml
 
 - `pcd_save.pcd_save_en: true`：启用 PCD 保存；
 - `pcd_save.interval: 50`：每 50 帧生成一个 PCD 分片；
+- `preprocess.timestamp_unit: 0`：`pcl_rectifier` 输出的逐点 `time` 单位为秒；
 - `mapping.extrinsic_T` 和 `mapping.extrinsic_R`：雷达与 IMU 外参；
 - `preprocess.blind: 2.5`：近距离盲区过滤；
 - `preprocess.scan_line: 6`、`scan_rate: 10`：当前雷达扫描配置。
 
 只有在确认硬件、雷达固件或外参发生变化时才修改这些参数。
+
+使用 rosbag 或发布 `/clock` 的仿真时，建图节点与 RViz 可启用仿真时间：
+
+```bash
+ros2 launch spark_fast_lio mapping_agibot.launch.yaml use_sim_time:=true
+```
+
+`mapping_rosbag_agibot.yaml` 默认启用仿真时间，回放时需要使用
+`ros2 bag play /path/to/bag --clock`。单独运行的校正节点也应添加
+`--ros-args -p use_sim_time:=true`。不发布 `/clock` 的仿真应保持
+`use_sim_time:=false`，并确保雷达和 IMU 使用一致的时间基准。
+仿真雷达还需要匹配点云字段、扫描线数、时间单位和 IMU 外参；不能直接
+沿用 X2 的固定旋转修正。静态 PCD 地图不包含完整的逐帧雷达和 IMU 记录，
+不能代替 rosbag 回放。
 
 ### 6.5 结束建图
 
@@ -344,63 +368,30 @@ ls -lh scans_*.pcd
 
 ## 7. 合并 PCD 地图
 
-仓库根目录的 `merge_pcd.py` 当前是空占位文件，而实际运行目录下的脚本又
-被 `.gitignore` 排除。为保证从 GitHub 新克隆后也能完成课程流程，可在 PCD
-目录创建下面的脚本：
+如果需要用已有扫描地图在 MuJoCo 中验证雷达、IMU 与 FAST-LIO 建图链路，
+参见 [MuJoCo 仿真说明](simulation/mujoco/README.md)。该流程无需连接真机。
+
+使用仓库根目录的 `merge_pcd.py`。脚本默认读取本工作空间 PCD 目录下的
+`scans_*.pcd`，按文件名中的数字排序，合并后进行 5 cm 体素降采样，生成
+同目录的 `map_merged.pcd`。从任意目录均可运行：
 
 ```bash
-cd "$AGIBOT_WS/src/spark-fast-lio/spark_fast_lio/PCD"
-nano merge_pcd.py
+python3 "$AGIBOT_WS/merge_pcd.py"
+ls -lh "$AGIBOT_WS/src/spark-fast-lio/spark_fast_lio/PCD/map_merged.pcd"
 ```
 
-粘贴以下内容并保存：
-
-```python
-import glob
-import re
-
-import open3d as o3d
-
-
-def natural_key(path):
-    return [
-        int(text) if text.isdigit() else text
-        for text in re.split(r"(\d+)", path)
-    ]
-
-
-pcd_files = sorted(glob.glob("scans_*.pcd"), key=natural_key)
-if not pcd_files:
-    raise FileNotFoundError("当前目录没有 scans_*.pcd")
-
-merged = o3d.geometry.PointCloud()
-for filename in pcd_files:
-    print("loading", filename)
-    merged += o3d.io.read_point_cloud(filename)
-
-print("total raw points:", len(merged.points))
-merged = merged.voxel_down_sample(voxel_size=0.05)
-print("after voxel:", len(merged.points))
-merged.estimate_normals()
-
-o3d.io.write_point_cloud(
-    "map_merged.pcd",
-    merged,
-    write_ascii=False,
-    compressed=False,
-)
-print("saved map_merged.pcd")
-```
-
-运行合并：
+也可以指定其他输入目录、输出路径及体素大小：
 
 ```bash
-python3 merge_pcd.py
-ls -lh map_merged.pcd
+python3 "$AGIBOT_WS/merge_pcd.py" \
+  --input-dir /path/to/PCD \
+  --output /path/to/map_merged.pcd \
+  --voxel-size 0.10
 ```
 
-如果地图过大，可把 `voxel_size=0.05` 调大到 `0.10`；地图会更小、处理更快，
-但细节也会减少。
+体素越大，地图越小，但细节也越少；`--voxel-size 0` 可关闭降采样。
+输出保留 XYZ 几何信息，不保留原始 `intensity` 等自定义字段。
+这些分片已经位于统一坐标系，脚本只合并与降采样，不执行配准或回环优化。
 
 ## 8. 生成 Nav2 二维地图
 

@@ -50,9 +50,12 @@ qtcreator-*
 .DS_Store
 audio_recordings/
 __pycache__/
+/simulation/mujoco/generated/
 
 # Emacs
 .#*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+.pytest_cache/

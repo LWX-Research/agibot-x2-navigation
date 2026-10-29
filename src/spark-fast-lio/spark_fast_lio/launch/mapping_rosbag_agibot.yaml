@@ -1,6 +1,7 @@
 ---
 launch:
   - arg: {name: start_rviz, default: 'true', description: automatically start rviz}
+  - arg: {name: use_sim_time, default: 'true', description: use rosbag /clock; play the bag with --clock}
   - arg: {name: rviz_path,  default: $(find-pkg-share spark_fast_lio)/rviz/rviz2.rviz, description: rviz file to load}
   - arg: {name: robot_name, default: 'rrghusky', description: 'The actual robot used when acquiring data' }
 
@@ -21,6 +22,8 @@ launch:
         - { from: 'imu',   to: '/imu/rectified'   }
 
       param:
+        - name: "use_sim_time"
+          value: "$(var use_sim_time)"
         - name: "common.lidar_frame"
           value: "lidar_chest_front"
         - name: "common.imu_frame"
@@ -42,6 +45,9 @@ launch:
       pkg: rviz2
       exec: rviz2
       name: "rviz"
+      param:
+        - name: "use_sim_time"
+          value: "$(var use_sim_time)"
       launch-prefix: "nice"
       output: "screen"
       args: >

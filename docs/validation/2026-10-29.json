@@ -1,0 +1,35 @@
+[
+  {
+    "mode": "carrier",
+    "run_id": "20261029-115529-199672",
+    "lidar_scans": 637,
+    "imu_messages": 12740,
+    "saved_map_points": 56935,
+    "position_rmse_m": 0.04428653181496308,
+    "position_error_max_m": 0.06732430034772868,
+    "ground_truth_travel_m": 16.832012209438687,
+    "validation_passed": true
+  },
+  {
+    "mode": "x2",
+    "run_id": "20261029-123435-969386",
+    "lidar_scans": 200,
+    "imu_messages": 10085,
+    "saved_map_points": 36434,
+    "position_rmse_m": 0.040134642508106236,
+    "position_error_max_m": 0.0831211784036482,
+    "ground_truth_travel_m": 2.8969548006903314,
+    "validation_passed": true
+  },
+  {
+    "mode": "x2-gui",
+    "run_id": "20261029-123722-528217",
+    "lidar_scans": 120,
+    "imu_messages": 6007,
+    "saved_map_points": 27975,
+    "position_rmse_m": 0.01168826012199567,
+    "position_error_max_m": 0.02235051788831562,
+    "ground_truth_travel_m": 1.8472477826680271,
+    "validation_passed": true
+  }
+]
